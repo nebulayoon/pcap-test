@@ -120,10 +120,6 @@ int main(int argc, char* argv[]){
 		fprintf(stderr, "pcap_open_live(%s) return null - %s\n", dev_name, errbuf);
 		return -1;
 	}
-    if (pcap_datalink(pcap_handle) != DLT_EN10MB) {
-        fprintf(stderr, "Device %s doesn't provide Ethernet headers - not supported\n", dev_name);
-        return -1;
-    }
 
     while(1){
         
@@ -135,7 +131,7 @@ int main(int argc, char* argv[]){
 			printf("pcap_next_ex return %d(%s)\n", res, pcap_geterr(pcap_handle));
 			break;
 		}
-        
+
         //filter
         const u_int16_t type = ether_type(packet);
         if(type != 0x0800){ //ipv4 check
