@@ -135,18 +135,24 @@ int main(int argc, char* argv[]){
 			printf("pcap_next_ex return %d(%s)\n", res, pcap_geterr(pcap_handle));
 			break;
 		}
+        
         //filter
         const u_int16_t type = ether_type(packet);
         if(type != 0x0800){ //ipv4 check
             continue;
         }
-        u_int8_t ipv4_header_len = ip_header_len(packet + ETHERNET_SIZE) * 4;
+
         u_char protocol = ip_header_protocol(packet + ETHERNET_SIZE);
-        u_short total_len = ip_header_total_len(packet + ETHERNET_SIZE);
-        u_short data_start_ptr = total_len - ipv4_header_len;
         if(protocol != 0x06){ //tcp check
             continue;
         }
+
+        // lengths
+        u_int8_t ipv4_header_len = ip_header_len(packet + ETHERNET_SIZE) * 4;
+        u_short total_len = ip_header_total_len(packet + ETHERNET_SIZE);
+        u_short data_start_ptr = total_len - ipv4_header_len;
+        u_int8_t tcp_len = tcp_header_len(packet + ETHERNET_SIZE + ipv4_header_len) * 4;
+        
 
         printf("\n\n\n\n\n\n");
         printf("[>]TCP packet\n");
@@ -161,10 +167,9 @@ int main(int argc, char* argv[]){
         print_tcp_info(packet + ETHERNET_SIZE + ipv4_header_len);
         
         //DATA
-        u_int8_t tcp_len = tcp_header_len(packet + ETHERNET_SIZE + ipv4_header_len);
-
-        if(pkt_header->caplen > ETHERNET_SIZE + ipv4_header_len + (tcp_len * 4)){
-            print_packet_data(packet + ETHERNET_SIZE + ipv4_header_len + (tcp_len * 4));
+        u_int8_t etot_headers_total_len = ETHERNET_SIZE + ipv4_header_len + tcp_len;
+        if(pkt_header->caplen > etot_headers_total_len){
+            print_packet_data(packet + etot_headers_total_len);
         }else{
             printf("[+]DATA\n");
             printf("The data is not available.\n");
